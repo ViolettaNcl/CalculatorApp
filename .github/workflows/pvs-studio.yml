@@ -30,14 +30,10 @@ jobs:
     - name: Build project
       run: dotnet build --configuration Release --no-restore
 
-    - name: Run PVS-Studio analysis
+    - name: Run PVS-Studio analysis (Demo Mode)
       run: |
-        pvs-studio-analyzer credentials ${{ secrets.PVS_USERNAME }} ${{ secrets.PVS_KEY }} -o PVS-Studio.lic
-        pvs-studio-analyzer analyze -f "CalculatorApp.sln" -l PVS-Studio.lic -o PVS-Studio.log --disableLicenseExpirationCheck
+        pvs-studio-analyzer analyze -f "CalculatorApp.sln" -o PVS-Studio.log
         plog-converter -t html -o PVS-Studio-report.html PVS-Studio.log
-      env:
-        PVS_USERNAME: ${{ secrets.PVS_USERNAME }}
-        PVS_KEY: ${{ secrets.PVS_KEY }}
 
     - name: Upload PVS-Studio report
       uses: actions/upload-artifact@v3
