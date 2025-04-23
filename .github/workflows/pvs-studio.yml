@@ -1,0 +1,46 @@
+name: PVS-Studio Analysis
+
+on:
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  pvs-studio-check:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Install PVS-Studio
+      run: |
+        choco install pvs-studio -y
+      env:
+        CHOCOLATEY_VERSION: 2.3.0
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build project
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Run PVS-Studio analysis
+      run: |
+        pvs-studio-analyzer credentials ${{ secrets.PVS_USERNAME }} ${{ secrets.PVS_KEY }} -o PVS-Studio.lic
+        pvs-studio-analyzer analyze -f "CalculatorApp.sln" -l PVS-Studio.lic -o PVS-Studio.log --disableLicenseExpirationCheck
+        plog-converter -t html -o PVS-Studio-report.html PVS-Studio.log
+      env:
+        PVS_USERNAME: ${{ secrets.PVS_USERNAME }}
+        PVS_KEY: ${{ secrets.PVS_KEY }}
+
+    - name: Upload PVS-Studio report
+      uses: actions/upload-artifact@v3
+      with:
+        name: pvs-studio-report
+        path: PVS-Studio-report.html
